@@ -1,7 +1,9 @@
 import { Browser, Page } from 'puppeteer';
 import { closeBrowser, createBrowser } from './utils/setup';
-import { getImageDetails, removeDuplicateImages, scrollToLazyLoad } from './utils/scraping';
+import { getImageDetails, removeDuplicateImages, scrollToLazyLoad } from './utils/scrape';
 import { ImageInfo } from './types';
+import { downloadImages } from './utils/download';
+import { DEFAULT_ROOT_DIR } from './constants';
 
 export const scrapeImages = async (
   browser: Browser, 
@@ -22,8 +24,6 @@ export const scrapeImages = async (
 
     // Extract image details
     const imageDetails = removeDuplicateImages(await getImageDetails(page));
-
-    console.log(`Found ${imageDetails.length} images`);
     return imageDetails;
   } catch (error) {
     console.error('Error scraping images:', error);
@@ -45,13 +45,14 @@ const main = async () => {
     if (!url) {
       throw new Error('Please provide a URL as the first argument');
     }
+
+    // scrape
     const images: ImageInfo[] = await scrapeImages(browser, url);
+    console.log(`Found ${images.length} images`);
 
-    console.log('Scraped images:');
-    images.forEach((image, index) => {
-      console.log(`${index + 1}: ${image.src}`);
-    });
-
+    // download images
+    await downloadImages(images, DEFAULT_ROOT_DIR);
+    console.log('Successfully downloaded images');
   } catch (error) {
     console.error('Scraping failed:', error);
   } finally {
