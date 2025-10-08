@@ -4,6 +4,7 @@ import { getImageDetails, removeDuplicateImages, scrollToLazyLoad } from './util
 import { ImageInfo } from './types';
 import { downloadImages } from './utils/download';
 import { DEFAULT_ROOT_DIR } from './constants';
+import path from 'node:path';
 
 export const scrapeImages = async (
   browser: Browser, 
@@ -51,7 +52,8 @@ const main = async () => {
     console.log(`Found ${images.length} images`);
 
     // download images
-    await downloadImages(images, DEFAULT_ROOT_DIR);
+    const downloadDir = path.join(DEFAULT_ROOT_DIR, `${Date.now()}`);
+    await downloadImages(images, downloadDir);
     console.log('Successfully downloaded images');
   } catch (error) {
     console.error('Scraping failed:', error);

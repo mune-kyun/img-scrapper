@@ -39,9 +39,7 @@ export const downloadImage = async (imageUrl: string, saveDir: string): Promise<
  * Download multiple images and save them to the specified directory
  */
 export const downloadImages = async (images: ImageInfo[], saveDir: string): Promise<string[]> => {
-  if (!fs.existsSync(saveDir)){
-    fs.mkdirSync(saveDir);
-  }
+  fs.mkdirSync(saveDir, { recursive: true });
   
   const downloadedPaths: string[] = [];
 
