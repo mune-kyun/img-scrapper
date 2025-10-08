@@ -1,9 +1,9 @@
 import { Browser, Page } from 'puppeteer';
 import { closeBrowser, createBrowser } from './core/setup';
 import { getImageDetails, removeDuplicateImages, scrollToLazyLoad } from './core/scrape';
-import { ImageInfo } from './types';
+import { ImageInfo } from './type';
 import { downloadImages } from './core/download';
-import { DEFAULT_ROOT_DIR } from './constants';
+import { DEFAULT_ROOT_DIR } from './constant';
 import path from 'node:path';
 
 export const scrapeImages = async (

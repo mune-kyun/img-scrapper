@@ -2,9 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import https from 'https';
 import http from 'http';
-import { ImageInfo } from '../types';
+import { ImageInfo } from '@/type';
 import { URL } from 'url';
-import { DEFAULT_DOWNLOAD_BATCH_SIZE } from '@/constants';
+import { DEFAULT_DOWNLOAD_BATCH_SIZE } from '@/constant';
 
 /** 
  * Download an image from a URL and save it to the specified directory

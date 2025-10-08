@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer';
-import { ImageInfo } from '../types';
+import { ImageInfo } from '@/type';
 
 /**
  * Wait for images to load on the page

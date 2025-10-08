@@ -1,4 +1,4 @@
-import { ScrapperConfig } from '../types';
+import { ScrapperConfig } from '@/type';
 import puppeteer, { Browser } from 'puppeteer';
 
 export const createBrowser = async (config: ScrapperConfig = {}): Promise<Browser> => {
