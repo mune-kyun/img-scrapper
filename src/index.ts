@@ -1,8 +1,8 @@
 import { Browser, Page } from 'puppeteer';
-import { closeBrowser, createBrowser } from './utils/setup';
-import { getImageDetails, removeDuplicateImages, scrollToLazyLoad } from './utils/scrape';
+import { closeBrowser, createBrowser } from './core/setup';
+import { getImageDetails, removeDuplicateImages, scrollToLazyLoad } from './core/scrape';
 import { ImageInfo } from './types';
-import { downloadImages } from './utils/download';
+import { downloadImages } from './core/download';
 import { DEFAULT_ROOT_DIR } from './constants';
 import path from 'node:path';
 

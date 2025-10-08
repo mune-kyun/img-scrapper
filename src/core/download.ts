@@ -1,4 +1,3 @@
-// download images by src URLs
 import fs from 'fs';
 import path from 'path';
 import https from 'https';
