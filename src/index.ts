@@ -1,35 +1,13 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
-
-export interface ScrapperConfig {
-  headless?: boolean;
-  timeout?: number;
-}
-
-export const createBrowser = async (config: ScrapperConfig = {}): Promise<Browser> => {
-  const defaultConfig = {
-    headless: true,
-    timeout: 30000,
-    ...config
-  };
-
-  try {
-    const browser = await puppeteer.launch({
-      headless: defaultConfig.headless,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    console.log('Browser initialized successfully');
-    return browser;
-  } catch (error) {
-    console.error('Failed to initialize browser:', error);
-    throw error;
-  }
-};
+import { Browser, Page } from 'puppeteer';
+import { closeBrowser, createBrowser } from './utils/setup';
+import { getImageDetails, removeDuplicateImages, scrollToLazyLoad } from './utils/scraping';
+import { ImageInfo } from './types';
 
 export const scrapeImages = async (
   browser: Browser, 
   url: string, 
   timeout = 30000
-): Promise<string[]> => {
+): Promise<ImageInfo[]> => {
   const page: Page = await browser.newPage();
   
   try {
@@ -39,28 +17,20 @@ export const scrapeImages = async (
       timeout 
     });
 
-    // Extract image URLs
-    const imageUrls = await page.evaluate(() => {
-      const images = Array.from(document.querySelectorAll('img'));
-      return images
-        .map(img => img.src)
-        .filter(src => src && src.startsWith('http'));
-    });
+    // Scroll to load lazy-loaded images
+    await scrollToLazyLoad(page, 100);
 
-    console.log(`Found ${imageUrls.length} images`);
-    return imageUrls;
+    // Extract image details
+    const imageDetails = removeDuplicateImages(await getImageDetails(page));
 
+    console.log(`Found ${imageDetails.length} images`);
+    return imageDetails;
   } catch (error) {
     console.error('Error scraping images:', error);
     throw error;
   } finally {
     await page.close();
   }
-};
-
-export const closeBrowser = async (browser: Browser): Promise<void> => {
-  await browser.close();
-  console.log('Browser closed');
 };
 
 // Example usage
@@ -71,12 +41,15 @@ const main = async () => {
   });
 
   try {
-    // Example: scrape images from a website
-    const images = await scrapeImages(browser, 'https://example.com');
-    
+    const url = process.argv[2];
+    if (!url) {
+      throw new Error('Please provide a URL as the first argument');
+    }
+    const images: ImageInfo[] = await scrapeImages(browser, url);
+
     console.log('Scraped images:');
-    images.forEach((url, index) => {
-      console.log(`${index + 1}: ${url}`);
+    images.forEach((image, index) => {
+      console.log(`${index + 1}: ${image.src}`);
     });
 
   } catch (error) {

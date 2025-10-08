@@ -1,11 +1,5 @@
 import { Page } from 'puppeteer';
-
-export interface ImageInfo {
-  src: string;
-  alt?: string;
-  width?: number;
-  height?: number;
-}
+import { ImageInfo } from '../types';
 
 /**
  * Wait for images to load on the page
@@ -44,46 +38,47 @@ export const getImageDetails = async (page: Page): Promise<ImageInfo[]> => {
   return await page.evaluate(() => {
     const images = Array.from(document.querySelectorAll('img'));
     return images.map(img => ({
-      src: img.src,
-      alt: img.alt || undefined,
-      width: img.naturalWidth || undefined,
-      height: img.naturalHeight || undefined
+      src: img?.src || '',
+      alt: img?.alt || undefined,
+      width: img?.naturalWidth && img.naturalWidth > 0 ? img.naturalWidth : undefined,
+      height: img?.naturalHeight && img.naturalHeight > 0 ? img.naturalHeight : undefined
     })).filter(info => info.src && info.src.startsWith('http'));
   });
 };
 
 /**
- * Scroll to load lazy-loaded images
+ * Scroll to lazy load
  */
-export const scrollToLoadImages = async (page: Page, scrollDelay = 1000): Promise<void> => {
+export const scrollToLazyLoad = async (page: Page, scrollDelay = 1000): Promise<void> => {
   await page.evaluate(async (delay) => {
     await new Promise<void>((resolve) => {
       let totalHeight = 0;
+      let previousScrollHeight = 0;
       const distance = 100;
       
-      const timer = setInterval(() => {
-        const scrollHeight = document.body.scrollHeight;
+      const timer = setInterval(async () => {
+        const currentScrollHeight = document.body.scrollHeight;
+        
+        // If we've scrolled past the content and height hasn't changed, we're done
+        if (totalHeight >= currentScrollHeight && currentScrollHeight === previousScrollHeight) {
+          clearInterval(timer);
+          resolve();
+          return;
+        }
+        
+        // Update previous height for next comparison
+        previousScrollHeight = currentScrollHeight;
+        
+        // Scroll down
         window.scrollBy(0, distance);
         totalHeight += distance;
 
-        if (totalHeight >= scrollHeight) {
-          clearInterval(timer);
-          resolve();
-        }
+        // Delay between scrolls
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
       }, delay);
     });
   }, scrollDelay);
-};
-
-/**
- * Filter images by minimum dimensions
- */
-export const filterImagesBySize = (images: ImageInfo[], minWidth = 100, minHeight = 100): ImageInfo[] => {
-  return images.filter(img => 
-    img.width && img.height && 
-    img.width >= minWidth && 
-    img.height >= minHeight
-  );
 };
 
 /**
