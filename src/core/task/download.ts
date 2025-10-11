@@ -6,12 +6,9 @@ import { ImageInfo } from '@/type';
 import { URL } from 'url';
 import { DEFAULT_DOWNLOAD_BATCH_SIZE } from '@/constant';
 
-/** 
- * Download an image from a URL and save it to the specified directory
- */
-export const downloadImage = async (imageUrl: string, saveDir: string): Promise<string> => {
+export const downloadImage = async (imageInfo: ImageInfo, saveDir: string): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const url = new URL(imageUrl);
+    const url = new URL(imageInfo.src);
     const fileName = path.basename(url.pathname);
     const filePath = path.join(saveDir, fileName);
 
@@ -34,9 +31,6 @@ export const downloadImage = async (imageUrl: string, saveDir: string): Promise<
   });
 };
 
-/** 
- * Download multiple images and save them to the specified directory
- */
 export const downloadImages = async (images: ImageInfo[], saveDir: string): Promise<string[]> => {
   fs.mkdirSync(saveDir, { recursive: true });
   
@@ -44,7 +38,7 @@ export const downloadImages = async (images: ImageInfo[], saveDir: string): Prom
 
   for (let i = 0; i < images.length; i += DEFAULT_DOWNLOAD_BATCH_SIZE) {
     const batch = images.slice(i, i + DEFAULT_DOWNLOAD_BATCH_SIZE);
-    const results = await Promise.all(batch.map(image => downloadImage(image.src, saveDir)));
+    const results = await Promise.all(batch.map(image => downloadImage(image, saveDir)));
     downloadedPaths.push(...results);
   }
 

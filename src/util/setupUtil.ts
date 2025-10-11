@@ -1,5 +1,6 @@
 import { ScrapperConfig } from '@/type';
-import puppeteer, { Browser } from 'puppeteer';
+import puppeteer, { Browser, Page } from 'puppeteer';
+import { isValidImageUrl } from './scrapeUtil';
 
 export const createBrowser = async (config: ScrapperConfig = {}): Promise<Browser> => {
   const defaultConfig = {
@@ -24,4 +25,8 @@ export const createBrowser = async (config: ScrapperConfig = {}): Promise<Browse
 export const closeBrowser = async (browser: Browser): Promise<void> => {
   await browser.close();
   console.log('Browser closed');
+};
+
+export const exposeUtils = async (page: Page) => {
+  await page.exposeFunction('isValidImageUrl', isValidImageUrl);
 };

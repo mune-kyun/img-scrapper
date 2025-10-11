@@ -1,31 +1,27 @@
 import { Browser, Page } from 'puppeteer';
-import { closeBrowser, createBrowser } from '@/core/setup';
-import { getImageDetails, removeDuplicateImages, scrollToLazyLoad } from './core/scrape';
-import { ImageInfo } from '@/type';
-import { downloadImages } from '@/core/download';
-import { DEFAULT_ROOT_DIR } from '@/constant';
-import path from 'node:path';
+import { closeBrowser, createBrowser, exposeUtils } from './util/setupUtil';
+import { DownloadListState, NavigateState  } from './core/state';
+import { DEFAULT_BROWSER_TIMEOUT } from './constant';
+import { NavigateStateContext } from './type';
 
 export const scrapeImages = async (
   browser: Browser, 
-  url: string, 
-  timeout = 30000
-): Promise<ImageInfo[]> => {
+  url: string,
+): Promise<void> => {
   const page: Page = await browser.newPage();
+  await exposeUtils(page);
   
   try {
-    console.log(`Navigating to: ${url}`);
-    await page.goto(url, { 
-      waitUntil: 'networkidle2',
-      timeout 
-    });
+    const download: DownloadListState = new DownloadListState();
 
-    // Scroll to load lazy-loaded images
-    await scrollToLazyLoad(page, 100);
+    const navigateStateContext: NavigateStateContext = {
+      page,
+      url,
+      shouldScrollToLoad: true,
+    };
+    const navigate: NavigateState = new NavigateState(download);
 
-    // Extract image details
-    const imageDetails = removeDuplicateImages(await getImageDetails(page));
-    return imageDetails;
+    await navigate.task(navigateStateContext);
   } catch (error) {
     console.error('Error scraping images:', error);
     throw error;
@@ -34,11 +30,10 @@ export const scrapeImages = async (
   }
 };
 
-// Example usage
 const main = async () => {
   const browser = await createBrowser({
-    headless: false, // Set to true for production
-    timeout: 30000
+    headless: false,
+    timeout: DEFAULT_BROWSER_TIMEOUT
   });
 
   try {
@@ -47,14 +42,9 @@ const main = async () => {
       throw new Error('Please provide a URL as the first argument');
     }
 
-    // scrape
-    const images: ImageInfo[] = await scrapeImages(browser, url);
-    console.log(`Found ${images.length} images`);
-
-    // download images
-    const downloadDir = path.join(DEFAULT_ROOT_DIR, `${Date.now()}`);
-    await downloadImages(images, downloadDir);
-    console.log('Successfully downloaded images');
+    await scrapeImages(browser, url);
+    
+    console.log('Successfully scrappinging images...');
   } catch (error) {
     console.error('Scraping failed:', error);
   } finally {
@@ -62,7 +52,6 @@ const main = async () => {
   }
 };
 
-// Run the example if this file is executed directly
 if (require.main === module) {
   main().catch(console.error);
 }
