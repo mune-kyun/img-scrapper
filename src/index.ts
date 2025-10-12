@@ -2,7 +2,7 @@ import { Browser, Page } from 'puppeteer';
 import { closeBrowser, createBrowser, exposeUtils } from './util/setupUtil';
 import { DownloadListState, NavigateState  } from './core/state';
 import { DEFAULT_BROWSER_TIMEOUT } from './constant';
-import { NavigateStateContext } from './type';
+import { NavigateStateContext, ScrollStrategyTypeEnum } from './type';
 
 export const scrapeImages = async (
   browser: Browser, 
@@ -12,14 +12,21 @@ export const scrapeImages = async (
   await exposeUtils(page);
   
   try {
-    const download: DownloadListState = new DownloadListState();
+    // const download: DownloadListState = new DownloadListState();
 
     const navigateStateContext: NavigateStateContext = {
       page,
       url,
       shouldScrollToLoad: true,
+      scrollProps: {
+        scrollStrategy: {
+          type: ScrollStrategyTypeEnum.ELEMENT_ID,
+          elementId: 'loading-spinner'
+        }
+      }
     };
-    const navigate: NavigateState = new NavigateState(download);
+    // const navigate: NavigateState = new NavigateState(download);
+    const navigate: NavigateState = new NavigateState();
 
     await navigate.task(navigateStateContext);
   } catch (error) {
@@ -43,8 +50,8 @@ const main = async () => {
     }
 
     await scrapeImages(browser, url);
-    
-    console.log('Successfully scrappinging images...');
+
+    console.log('Successfully scraping images...');
   } catch (error) {
     console.error('Scraping failed:', error);
   } finally {

@@ -1,6 +1,6 @@
 import { DEFAULT_NAVIGATE_TIMEOUT, DEFAULT_SCROLL_DELAY, DEFAULT_SCROLL_DISTANCE, DEFAULT_SCROLL_STAGNANT_RETRIES, DEFAULT_SCROLL_TIMEOUT } from "@/constant";
 import { Page } from "puppeteer";
-import { ScrollProps } from "@/type";
+import { ScrollProps, ScrollStrategyTypeEnum } from "@/type";
 
 export const navigateToPage = async (page: Page, url: string, timeout = DEFAULT_NAVIGATE_TIMEOUT): Promise<void> => {
   try {
@@ -19,15 +19,20 @@ export const scrollToLazyLoad = async (
     scrollDelay = DEFAULT_SCROLL_DELAY,
     scrollTimeout = DEFAULT_SCROLL_TIMEOUT,
     scrollDistance = DEFAULT_SCROLL_DISTANCE,
-    scrollMaxStagnantRetries = DEFAULT_SCROLL_STAGNANT_RETRIES
+    scrollMaxStagnantRetries = DEFAULT_SCROLL_STAGNANT_RETRIES,
+    scrollStrategy = { type: ScrollStrategyTypeEnum.PX },
   } = scrollProps;
-
+  
   await page.evaluate(
     async (
       scrollDelay: number,
       scrollTimeout: number,
       scrollDistance: number,
-      scrollMaxStagnantRetries: number
+      scrollMaxStagnantRetries: number,
+      scrollStrategy: {
+        type: ScrollStrategyTypeEnum;
+        elementId?: string;
+      },
     ) => {
       await new Promise<void>(async (resolve) => {
         let totalHeight = 0;
@@ -68,7 +73,15 @@ export const scrollToLazyLoad = async (
           previousScrollHeight = currentScrollHeight;
 
           // Scroll down
-          window.scrollBy(0, scrollDistance);
+          if (scrollStrategy.type === 'px') {
+            window.scrollBy(0, scrollDistance);
+          } else if (scrollStrategy.type === 'element_id') {
+            const elementId = scrollStrategy.elementId || '';
+            const element = document.getElementById(elementId);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+          }
           totalHeight += scrollDistance;
 
           // Delay between scrolls
@@ -79,6 +92,7 @@ export const scrollToLazyLoad = async (
     scrollDelay,
     scrollTimeout,
     scrollDistance,
-    scrollMaxStagnantRetries
+    scrollMaxStagnantRetries,
+    scrollStrategy
   );
 };
